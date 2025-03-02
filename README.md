@@ -30,13 +30,13 @@ Below are the plots for total reward per episode and reward per step:
 
 ### Total Reward per Episode
 
-![Total Reward per Episode](plots/total_reward_plot_2025-03-03_01-00-31.png)
+![Total Reward per Episode](plots/total_reward_plot_2025-03-03_01-55-34.png)
 
 After the 1000th episode, the model starts learning, and from the 1500th episode onward, the total reward steadily increases, indicating stable improvement.
 
 ### Reward per Step
 
-![Reward per Step](plots/reward_plot_2025-03-03_01-00-31.png)
+![Reward per Step](plots/reward_plot_2025-03-03_01-55-34.png)
 
 ## Additional Files
 
