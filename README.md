@@ -30,8 +30,13 @@ Below are the plots for total reward per episode and reward per step:
 
 ### Total Reward per Episode
 
-![Total Reward per Episode](plots/total_reward_plot.png)
+![Total Reward per Episode](plots/total_reward_plot_2025-03-03_01-00-31.png)
 
 ### Reward per Step
 
-![Reward per Step](plots/reward_per_step_plot.png)
+![Reward per Step](plots/reward_plot_2025-03-03_01-00-31.png)
+
+## Additional Files
+
+- **`reward_per_step.txt`** and **`total_reward_per_episode.txt`** contain the reward values recorded during training.
+- **`plot.py`** and **`plot_2.py`** contain the scripts used to generate the reward plots.
