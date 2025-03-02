@@ -40,7 +40,8 @@ After the 1000th episode, the model starts learning, and from the 1500th episode
 
 ## Additional Files
 
+- original script that created the .txt files and the model is **`hw2.py`**. In **`hw2_v2.py`** the train() and test() methods are created for readability.
 - **`reward_per_step.txt`** and **`total_reward_per_episode.txt`** contain the reward values recorded during training.
 - **`plot.py`** and **`plot_2.py`** contain the scripts used to generate the reward plots.
 - All plots that are created during training are in **`plots`** folder
-- The training took more than 10 hours and unfortunately in the end I realized I did not save the model but as mentioned you can reach the results on .txt files
+- The training took more than 12 hours and unfortunately in the end I realized I did not save the model but as mentioned you can reach the results on .txt files
