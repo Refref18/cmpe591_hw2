@@ -36,7 +36,7 @@ After the 1000th episode, the model starts learning, and from the 1500th episode
 
 ### Reward per Step
 
-![Reward per Step](plots/reward_plot_2025-03-05_11-37-34)
+![Reward per Step](plots/reward_plot_2025-03-05_11-37-34.png)
 
 ## Additional Files
 
