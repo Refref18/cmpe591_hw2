@@ -1,3 +1,4 @@
+import gymnasium as gym
 import math
 import random
 import matplotlib
@@ -265,8 +266,8 @@ else:
     num_episodes = 10000
 
 
-reward_per_step_file = "reward_per_step.txt"
-total_reward_file = "total_reward_per_episode.txt"
+reward_per_step_file = "2_reward_per_step_v2.txt"
+total_reward_file = "2_total_reward_per_episode_v2.txt"
 
 
 open(reward_per_step_file, "w").close()
@@ -277,82 +278,100 @@ open(total_reward_file, "w").close()
 
 update_frequency = 10
 
-for i_episode in range(num_episodes):
-    # Initialize the environment and get its state
-    env.reset()
-    state = torch.tensor(env.high_level_state(), dtype=torch.float32, device=device).unsqueeze(0)
-    #print("state", state.size())
-    done=False
-    episode_durations = []
-    total_reward = 0  # 🔹 Total reward'ı tutmak için
-    step = 0  # 🔹 Adım sayacı
-    for t in count():
-        action = select_action(state)
-        #print("action", action.size())
-        observation, reward, terminated, truncated = env.step(action.item())
+def train(num_episodes):
+    global epsilon
+    for i_episode in range(num_episodes):
+        env.reset()
+        state = torch.tensor(env.high_level_state(), dtype=torch.float32, device=device).unsqueeze(0)
+        done = False
+        episode_durations = []
+        total_reward = 0
+        step = 0
 
-        #print("obs", observation)
-        #print("reward", reward)
-        #print("terminated", terminated)
-        #print("truncated", truncated)
+        for t in count():
+            action = select_action(state)
+            observation, reward, terminated, truncated = env.step(action.item())
+            reward = torch.tensor([reward], device=device)
+            done = terminated or truncated
+            total_reward += reward.item()
 
-        reward = torch.tensor([reward], device=device)
-        done = terminated or truncated
+            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0) if not done else None
+            memory.push(state, action, reward, next_state, done)
 
+            state = next_state
+
+            if step % update_frequency == 0:
+                optimize_model()
+
+            target_net_state_dict = target_net.state_dict()
+            policy_net_state_dict = policy_net.state_dict()
+            for key in policy_net_state_dict:
+                target_net_state_dict[key] = policy_net_state_dict[key] * TAU + target_net_state_dict[key] * (1 - TAU)
+            target_net.load_state_dict(target_net_state_dict)
+
+            with open(reward_per_step_file.replace(".txt", "_v2.txt"), "a") as f:
+                f.write(f"{step},{reward.item()}\n")
+
+            step += 1
+
+            if done:
+                episode_durations.append(t + 1)
+                average_reward = total_reward / step if step > 0 else 0
+                epsilon = max(EPS_END, epsilon * EPS_DECAY)
+
+                print(f"Episode: {i_episode} | Total Reward: {total_reward:.2f} | Average Reward: {average_reward:.4f} | Epsilon: {epsilon:.6f}")
+
+                with open(total_reward_file.replace(".txt", "_v2.txt"), "a") as f:
+                    f.write(f"{i_episode},{total_reward}\n")
+
+                # **Modeli Kaydet**
+                torch.save(policy_net.state_dict(), "dqn_model.pth")
+                break
+
+def test(num_episodes):
+    # **Modeli Yükle**
+    if os.path.exists("dqn_model.pth"):
+        policy_net.load_state_dict(torch.load("dqn_model.pth"))
+        print("Model Loaded from dqn_model.pth")
+    else:
+        print("No saved model found! Running test without pretrained model.")
+
+    for i_episode in range(num_episodes):
+        env.reset()
+        state = torch.tensor(env.high_level_state(), dtype=torch.float32, device=device).unsqueeze(0)
+        done = False
+        total_reward = 0
+
+        for t in count():
+            with torch.no_grad():
+                action = policy_net(state).max(1).indices.view(1, 1)
+            observation, reward, terminated, truncated = env.step(action.item())
+            reward = torch.tensor([reward], device=device)
+            done = terminated or truncated
+            total_reward += reward.item()
+
+            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0) if not done else None
+            state = next_state
+
+            if done:
+                print(f"Test Episode: {i_episode} | Total Reward: {total_reward:.2f}")
+                break
+
+def main(train_episodes=10000, test_episodes=100):
+    """
+    Main function to train and test the DQN model.
     
-        total_reward += reward.item()  # 🔹 Toplam ödülü güncelle
-        #print("reward", reward)
-       
-        if terminated:
-            next_state = None
-        else:
-            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
-        #print("next_state", next_state.size())
+    :param train_episodes: Number of episodes to train the model
+    :param test_episodes: Number of episodes to test the model
+    """
+    print("Starting Training...")
+    train(train_episodes)
 
-        # Store the transition in memory
-        memory.push(state, action, reward, next_state, done)
+    print("Training Complete. Starting Testing...")
+    test(test_episodes)
 
-        # Move to the next state
-        state = next_state
+    print("Testing Complete.")
 
-        # Perform one step of the optimization (on the policy network)
-        if step % update_frequency == 0:
-            optimize_model()
+if __name__ == "__main__":
+    main()
 
-        # Soft update of the target network's weights
-        # θ′ ← τ θ + (1 −τ )θ′
-        target_net_state_dict = target_net.state_dict()
-        policy_net_state_dict = policy_net.state_dict()
-        for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-        target_net.load_state_dict(target_net_state_dict)
-        
-        with open(reward_per_step_file, "a") as f:
-            f.write(f"{step},{reward.item()}\n")
-        
-        step += 1  # Adım sayısını artır
-
-        if done:
-            episode_durations.append(t + 1)
-            
-            # Ortalama ödül hesapla (adım başına ödül)
-            average_reward = total_reward / step if step > 0 else 0
-            
-            # 🔹 **Epsilon güncelleme** (her episode sonunda düşüş)
-            epsilon = max(EPS_END, epsilon * EPS_DECAY)
-            # Şu anki epsilon değeri
-            current_epsilon = epsilon
-
-            # Sonuçları ekrana yazdır
-            print(f"Episode: {i_episode} | Total Reward: {total_reward:.2f} | Average Reward: {average_reward:.4f} | Epsilon: {current_epsilon:.6f}")
-
-            # Total reward'u dosyaya kaydet
-            with open(total_reward_file, "a") as f:
-                f.write(f"{i_episode},{total_reward}\n")
-
-            break
-
-print('Complete')
-plot_durations(show_result=True)
-plt.ioff()
-plt.show()
