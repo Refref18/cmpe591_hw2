@@ -13,7 +13,7 @@ In this homework, a Deep Q Network (DQN) is trained to push an object to a desir
 
 ## Parameters
 
-- **Number of Episodes**: 10,000
+- **Number of Episodes**: 10,000 (couldn't run after 6700th episode due to time and computational restrictions)
 - **Batch Size**: 64
 - **Gamma (Discount Factor)**: 0.99
 - **Epsilon Start**: 1.0
@@ -44,5 +44,5 @@ After the 1000th episode, the model starts learning, and from the 1500th episode
 - **`reward_per_step_v2.txt`** and **`total_reward_per_episode_v2.txt`** contain the reward values recorded during training.
 - **`plot.py`** and **`plot_2.py`** contain the scripts used to generate the reward plots.
 - All plots that are created during training are in **`plots`** folder
-- The training took more than 15 hours and unfortunately in the end it could't reach the 10000th episode, so the plateou was not observed.
+- The training took more than 20 hours and unfortunately in the end it could't reach the 10000th episode, so the plateou was not observed.
 - The model is saved in **`dqn_model.pth`**.
